@@ -21,7 +21,6 @@ private val empty = Post(
 )
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
-    // упрощённый вариант
     private val repository: PostRepository = PostRepositoryImpl()
     private val _data = MutableLiveData(FeedModel())
     val data: LiveData<FeedModel>
@@ -51,9 +50,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun save() {
         edited.value?.let {
             repository.save(it, object : PostRepository.Callback<Post> {
-               // TODO:
+                override fun onSuccess(post: Post) {
+                    _postCreated.value = Unit
+                    loadPosts()
+                }
+
+                override fun onError(e: Exception) {
+                    _data.value = FeedModel(error = true)
+                }
             })
-            _postCreated.value = Unit
         }
         edited.value = empty
     }
@@ -72,13 +77,25 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun likeById(id: Long) {
         repository.likeById(id, object : PostRepository.Callback<Post> {
-            // TODO:
+            override fun onSuccess(post: Post) {
+                loadPosts()
+            }
+
+            override fun onError(e: Exception) {
+                _data.value = FeedModel(error = true)
+            }
         })
     }
 
     fun removeById(id: Long) {
         repository.removeById(id, object : PostRepository.Callback<Unit> {
-            // TODO
+            override fun onSuccess(unit: Unit) {
+                loadPosts()
+            }
+
+            override fun onError(e: Exception) {
+                _data.value = FeedModel(error = true)
+            }
         })
     }
 }
