@@ -76,15 +76,31 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun likeById(id: Long) {
-        repository.likeById(id, object : PostRepository.Callback<Post> {
-            override fun onSuccess(post: Post) {
-                loadPosts()
-            }
+        val post = _data.value?.posts?.find { it.id == id }
+        if (post != null) {
+            if (post.likedByMe) {
+                // Если пост уже лайкнут, снимаем лайк
+                repository.unlikeById(id, object : PostRepository.Callback<Post> {
+                    override fun onSuccess(post: Post) {
+                        loadPosts()
+                    }
 
-            override fun onError(e: Exception) {
-                _data.value = FeedModel(error = true)
+                    override fun onError(e: Exception) {
+                        _data.value = FeedModel(error = true)
+                    }
+                })
+            } else {
+                repository.likeById(id, object : PostRepository.Callback<Post> {
+                    override fun onSuccess(post: Post) {
+                        loadPosts()
+                    }
+
+                    override fun onError(e: Exception) {
+                        _data.value = FeedModel(error = true)
+                    }
+                })
             }
-        })
+        }
     }
 
     fun removeById(id: Long) {
